@@ -26,5 +26,21 @@ export const departmentSchema = z.object({
   icon: z.string().optional(),
 });
 
+export const leaveRequestSchema = z.object({
+  employee_id: z.string().uuid(),
+  leave_type: z.enum([
+    "vacation",
+    "sick",
+    "personal",
+    "maternity",
+    "paternity",
+    "bereavement",
+  ]),
+  start_date: z.string().min(1, "Start date is required"),
+  end_date: z.string().min(1, "End date is required"),
+  reason: z.string().min(10, "Please provide a detailed reason"),
+});
+
 export type EmployeeFormData = z.infer<typeof employeeSchema>;
 export type DepartmentFormData = z.infer<typeof departmentSchema>;
+export type LeaveRequestFormData = z.infer<typeof leaveRequestSchema>;

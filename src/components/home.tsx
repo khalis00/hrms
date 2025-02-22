@@ -5,6 +5,7 @@ import { useMetrics } from "@/lib/hooks/useMetrics";
 
 const Home = () => {
   const { metrics, loading } = useMetrics();
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-none">

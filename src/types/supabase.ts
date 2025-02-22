@@ -9,7 +9,176 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_count: number | null
+          icon: string | null
+          id: string
+          name: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_count?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_count?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      employee_documents: {
+        Row: {
+          employee_id: string | null
+          file_type: string
+          file_url: string
+          id: string
+          name: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          employee_id?: string | null
+          file_type: string
+          file_url: string
+          id?: string
+          name: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          employee_id?: string | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          name?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          address: string | null
+          auth_id: string | null
+          created_at: string | null
+          department: string
+          email: string
+          emergency_contact: string | null
+          full_name: string
+          id: string
+          password: string | null
+          phone: string | null
+          position: string
+          role: Database["public"]["Enums"]["user_role"]
+          salary: number
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          auth_id?: string | null
+          created_at?: string | null
+          department: string
+          email: string
+          emergency_contact?: string | null
+          full_name: string
+          id?: string
+          password?: string | null
+          phone?: string | null
+          position: string
+          role?: Database["public"]["Enums"]["user_role"]
+          salary: number
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          auth_id?: string | null
+          created_at?: string | null
+          department?: string
+          email?: string
+          emergency_contact?: string | null
+          full_name?: string
+          id?: string
+          password?: string | null
+          phone?: string | null
+          position?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          salary?: number
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      leave_requests: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          employee_id: string | null
+          end_date: string
+          id: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          reason: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["leave_status"] | null
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          employee_id?: string | null
+          end_date: string
+          id?: string
+          leave_type: Database["public"]["Enums"]["leave_type"]
+          reason?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["leave_status"] | null
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          employee_id?: string | null
+          end_date?: string
+          id?: string
+          leave_type?: Database["public"]["Enums"]["leave_type"]
+          reason?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["leave_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +187,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      leave_status: "pending" | "approved" | "rejected"
+      leave_type:
+        | "vacation"
+        | "sick"
+        | "personal"
+        | "maternity"
+        | "paternity"
+        | "bereavement"
+      user_role: "admin" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
