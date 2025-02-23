@@ -17,7 +17,8 @@ import {
 import { employeeSchema, type EmployeeFormData } from "@/lib/schemas";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/utils/toast";
-import { Upload, X } from "lucide-react";
+import { Upload, X, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 interface AddEmployeeDialogProps {
   open?: boolean;
@@ -46,6 +47,7 @@ const AddEmployeeDialog = ({
   });
 
   const documents = watch("documents") || [];
+  const profilePicture = watch("profile_picture");
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +75,27 @@ const AddEmployeeDialog = ({
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
+      let profile_picture_url = null;
+
+      // Upload profile picture if provided
+      if (data.profile_picture) {
+        const fileExt = data.profile_picture.name.split(".").pop();
+        const filePath = `profile-pictures/${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("employee-photos")
+          .upload(filePath, data.profile_picture);
+
+        if (uploadError) throw uploadError;
+
+        // Get the public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("employee-photos").getPublicUrl(filePath);
+
+        profile_picture_url = publicUrl;
+      }
+
       // First insert the employee
       const { data: employee, error: employeeError } = await supabase
         .from("employees")
@@ -86,6 +109,7 @@ const AddEmployeeDialog = ({
           phone: data.phone,
           address: data.address,
           emergency_contact: data.emergency_contact,
+          profile_picture_url,
         })
         .select()
         .single();
@@ -136,6 +160,36 @@ const AddEmployeeDialog = ({
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
+            {/* Profile Picture Upload */}
+            <div className="col-span-2">
+              <Label>Profile Picture</Label>
+              <div className="mt-2 flex items-center gap-4">
+                <Avatar className="w-20 h-20">
+                  {profilePicture ? (
+                    <AvatarImage
+                      src={URL.createObjectURL(profilePicture)}
+                      alt="Profile preview"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback>
+                      <User className="w-8 h-8 text-gray-400" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setValue("profile_picture", file);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="full_name">Full Name</Label>
               <Input

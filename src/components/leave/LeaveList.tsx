@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/utils/toast";
-import { useAuth } from "@/lib/contexts/AuthContext";
 import LeaveRequestDialog from "./LeaveRequestDialog";
 import LeaveCalendar from "./LeaveCalendar";
 
@@ -13,11 +12,27 @@ const LeaveList = () => {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { user, isAdmin } = useAuth();
+  const [currentEmployee, setCurrentEmployee] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentEmployee = async () => {
+      // In a real app, this would come from your auth context
+      // For now, we'll just get the first employee
+      const { data } = await supabase
+        .from("employees")
+        .select("*")
+        .limit(1)
+        .single();
+
+      setCurrentEmployee(data);
+    };
+
+    fetchCurrentEmployee();
+  }, []);
 
   const fetchLeaves = async () => {
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from("leave_requests")
         .select(
           `
@@ -27,13 +42,6 @@ const LeaveList = () => {
         `,
         )
         .order("created_at", { ascending: false });
-
-      // If not admin, only show own leaves
-      if (!isAdmin) {
-        query = query.eq("employee_id", user?.id);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
       setLeaves(data || []);
@@ -60,25 +68,7 @@ const LeaveList = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [isAdmin, user?.id]);
-
-  const handleStatusUpdate = async (leaveId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from("leave_requests")
-        .update({
-          status,
-          approved_by: user?.id,
-        })
-        .eq("id", leaveId);
-
-      if (error) throw error;
-      showToast.success(`Leave request ${status}`);
-    } catch (error) {
-      console.error("Error updating leave status:", error);
-      showToast.error("Error updating leave status");
-    }
-  };
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -105,7 +95,7 @@ const LeaveList = () => {
         <div className="lg:col-span-2">
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">
-              {isAdmin ? "All Leave Requests" : "My Leave Requests"}
+              Recent Leave Requests
             </h2>
             <div className="space-y-4">
               {leaves.map((leave) => (
@@ -113,19 +103,13 @@ const LeaveList = () => {
                   key={leave.id}
                   className="flex items-center justify-between p-4 border rounded-lg"
                 >
-                  <div className="flex-1">
+                  <div>
                     <p className="font-medium">{leave.employee.full_name}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(leave.start_date).toLocaleDateString()} -{" "}
                       {new Date(leave.end_date).toLocaleDateString()}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">{leave.reason}</p>
-                    {leave.approver && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {leave.status === "approved" ? "Approved" : "Rejected"}{" "}
-                        by {leave.approver.full_name}
-                      </p>
-                    )}
                   </div>
                   <div className="flex items-center gap-4">
                     <Badge
@@ -134,30 +118,6 @@ const LeaveList = () => {
                     >
                       {leave.status}
                     </Badge>
-                    {isAdmin && leave.status === "pending" && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="text-green-600 hover:text-green-700"
-                          onClick={() =>
-                            handleStatusUpdate(leave.id, "approved")
-                          }
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() =>
-                            handleStatusUpdate(leave.id, "rejected")
-                          }
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -179,12 +139,14 @@ const LeaveList = () => {
         </div>
       </div>
 
-      <LeaveRequestDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={fetchLeaves}
-        employeeId={user?.id}
-      />
+      {currentEmployee && (
+        <LeaveRequestDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSuccess={fetchLeaves}
+          employeeId={currentEmployee.id}
+        />
+      )}
     </div>
   );
 };

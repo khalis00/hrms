@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 export const employeeSchema = z.object({
+  status: z.enum(["active", "inactive", "on_leave"]).default("active"),
   full_name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   department: z.string().min(1, "Please select a department"),
@@ -10,6 +11,7 @@ export const employeeSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   emergency_contact: z.string().optional(),
+  profile_picture: z.instanceof(File).optional(),
   documents: z
     .array(
       z.object({

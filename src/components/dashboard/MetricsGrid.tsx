@@ -48,7 +48,7 @@ const MetricsGrid = ({ metrics = defaultMetrics }: MetricsGridProps) => {
 
         <MetricCard
           title="Monthly Payroll"
-          value={`$${metrics.payroll.total.toLocaleString()}`}
+          value={`KES ${metrics.payroll.total.toLocaleString()}`}
           change={metrics.payroll.change}
           color="green"
           icon={<DollarSign />}

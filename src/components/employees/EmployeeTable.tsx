@@ -94,7 +94,10 @@ const EmployeeTable = ({
     };
   }, [searchQuery, departmentFilter, statusFilter]);
 
-  const handleStatusChange = async (employeeId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    employeeId: string,
+    newStatus: "active" | "inactive" | "on_leave",
+  ) => {
     try {
       const { error } = await supabase
         .from("employees")
@@ -102,6 +105,14 @@ const EmployeeTable = ({
         .eq("id", employeeId);
 
       if (error) throw error;
+
+      // Update the employee in the local state
+      setEmployees(
+        employees.map((emp) =>
+          emp.id === employeeId ? { ...emp, status: newStatus } : emp,
+        ),
+      );
+
       showToast.success("Employee status updated");
     } catch (error) {
       console.error("Error updating employee status:", error);
@@ -119,6 +130,10 @@ const EmployeeTable = ({
         .eq("id", employeeToDelete.id);
 
       if (error) throw error;
+
+      // Remove the employee from the local state
+      setEmployees(employees.filter((emp) => emp.id !== employeeToDelete.id));
+
       showToast.success("Employee deleted successfully");
       setDeleteDialogOpen(false);
       setEmployeeToDelete(null);
@@ -173,7 +188,10 @@ const EmployeeTable = ({
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${employee.id}`}
+                      src={
+                        employee.profile_picture_url ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${employee.id}`
+                      }
                       alt={employee.full_name}
                     />
                     <AvatarFallback>
